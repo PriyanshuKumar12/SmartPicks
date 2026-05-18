@@ -1,0 +1,5 @@
+# Python dependencies for the recommender backend.
+# Install with:  pip install -r requirements.txt
+pandas
+numpy
+flask

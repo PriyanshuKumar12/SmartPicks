@@ -1,0 +1,92 @@
+:root {
+  --bg: #050505;
+  --bg-soft: #0d0d0d;
+  --fg: #f3f3f1;
+  --muted: #7d7d7a;
+  --muted-dim: #4a4a48;
+  --accent: #5cae86;
+  --accent-bright: #7fd6a8;
+  --line: rgba(255, 255, 255, 0.14);
+
+  --font-display: 'Anton', 'Arial Narrow', sans-serif;
+  --font-label: 'Bebas Neue', 'Arial Narrow', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Film grain + vignette + thin accent frame — sit above everything, ignore clicks */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 45%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+}
+
+#root {
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Thin cinematic accent frame around the viewport */
+#root::before {
+  content: '';
+  position: fixed;
+  inset: 14px;
+  z-index: 9997;
+  pointer-events: none;
+  border: 1px solid rgba(92, 174, 134, 0.28);
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: #262626;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+@media (max-width: 600px) {
+  #root::before {
+    inset: 8px;
+  }
+}
