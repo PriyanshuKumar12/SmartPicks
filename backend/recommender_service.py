@@ -22,6 +22,7 @@ Run:  python recommender_service.py [port]   (default port 8000)
 import os
 import pickle
 import sys
+from urllib.request import urlopen
 
 import numpy as np
 from flask import Flask, jsonify, request
@@ -33,11 +34,41 @@ app = Flask(__name__)
 MODEL_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
+def _ensure_similarity_pkl():
+    # similarity.pkl is 176 MB and not committed to git. In production the
+    # deploy host fetches it once from SIMILARITY_URL (e.g. a Hugging Face
+    # Hub direct-download URL) on first boot.
+    path = os.path.join(MODEL_DIR, "similarity.pkl")
+    if os.path.exists(path):
+        return path
+
+    url = os.environ.get("SIMILARITY_URL")
+    if not url:
+        raise RuntimeError(
+            "similarity.pkl is missing and SIMILARITY_URL is not set. "
+            "Either place the file in backend/ or set SIMILARITY_URL to a direct-download URL."
+        )
+
+    print(f"[recommender-service] Downloading similarity.pkl from {url} ...", file=sys.stderr, flush=True)
+    tmp_path = path + ".part"
+    with urlopen(url) as response, open(tmp_path, "wb") as out:
+        chunk = 1024 * 1024
+        while True:
+            buf = response.read(chunk)
+            if not buf:
+                break
+            out.write(buf)
+    os.replace(tmp_path, path)
+    print(f"[recommender-service] Downloaded similarity.pkl ({os.path.getsize(path) // (1024*1024)} MB).", file=sys.stderr, flush=True)
+    return path
+
+
 def _load():
     print("[recommender-service] Loading model files...", file=sys.stderr, flush=True)
+    similarity_path = _ensure_similarity_pkl()
     with open(os.path.join(MODEL_DIR, "movies_preprocessed.pkl"), "rb") as f:
         data = pickle.load(f)
-    with open(os.path.join(MODEL_DIR, "similarity.pkl"), "rb") as f:
+    with open(similarity_path, "rb") as f:
         similarity = pickle.load(f)
 
     # Sorted titles (matches get_titles.py: titles.sort()).

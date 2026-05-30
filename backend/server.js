@@ -203,8 +203,20 @@ let moviesCache = null;
 // Phase 1 #3: cache TMDB movie-detail responses (and 404 placeholders).
 const tmdbCache = new Map();
 
+// FRONTEND_URL can be a single origin or a comma-separated list.
+// Defaults to localhost for local dev.
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type'],
 }));
