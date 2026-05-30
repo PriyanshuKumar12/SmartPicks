@@ -1,0 +1,59 @@
+# Render Blueprint for SmartPicks.
+# After pushing this repo to GitHub, go to https://dashboard.render.com/blueprints
+# and point Render at this repository. Render will create both services below.
+#
+# Required secrets to set in the Render dashboard (Environment tab) AFTER
+# the services are first created:
+#   smartpicks-backend:
+#     - TMDB_API_KEY    : your TMDB v3 API key
+#     - SIMILARITY_URL  : direct-download URL for similarity.pkl (Hugging Face)
+#     - FRONTEND_URL    : the deployed static-site URL, e.g. https://smartpicks-frontend.onrender.com
+#
+# The frontend's VITE_API_URL is wired below to the backend service automatically.
+
+services:
+  # ---------------- Backend (Node + Python) ----------------
+  - type: web
+    name: smartpicks-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    # Render's Node runtime ships with Python 3 available, so we install both
+    # Node deps and Python deps in the build step.
+    buildCommand: npm install && pip install --no-cache-dir -r ../requirements.txt
+    startCommand: node server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: PORT
+        value: "5001"
+      - key: PYTHON_SERVICE_PORT
+        value: "8000"
+      # Secrets — set these in the Render dashboard, not in source control.
+      - key: TMDB_API_KEY
+        sync: false
+      - key: SIMILARITY_URL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+
+  # ---------------- Frontend (Vite static build) ----------------
+  - type: web
+    name: smartpicks-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    # SPA fallback so client-side routes (if added later) work.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      # Set this to your backend's full URL after first deploy,
+      # e.g. https://smartpicks-backend.onrender.com
+      - key: VITE_API_URL
+        sync: false
